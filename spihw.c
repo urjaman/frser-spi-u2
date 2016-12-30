@@ -1,7 +1,5 @@
 /*
- * This file is part of the frser-duino project.
- *
- * Copyright (C) 2015 Urja Rannikko <urjaman@gmail.com>
+ * Copyright (C) 2015,2016 Urja Rannikko <urjaman@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -13,9 +11,6 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
 #include "main.h"
@@ -23,13 +18,28 @@
 #include "fast-usbserial.h"
 #include "spihw.h"
 
-/* This is just a bit of glue between parts of libfrser. */
+#if (defined __AVR_ATmega16U4__) || (defined __AVR_ATmega32U4__)
+void spi_hw_chk(void) {
+	/* Set PB4/D8=~HOLD and PB5/D9=~WP to 1.. */
+	PORTB |= _BV(4) | _BV(5);
+	DDRB |= _BV(4) | _BV(5);
+	/* TODO: Do the actual check... */
+	/* PD5 to 0 drives the green LED. */
+	PORTD &= ~_BV(5);
+	DDRD |= _BV(5);
+}
+#else
+void spi_hw_chk(void) { }
+#endif
 
 void flash_set_safe(void) {
 	spi_uninit();
 	DDR_SPI &= ~_BV(MOSI);
 	DDR_SPI &= ~_BV(SCK);
 	DDR_SPI &= ~_BV(SS);
+#ifdef SPI_CS
+	DDR_SPI &= ~_BV(SPI_CS);
+#endif
 }
 
 void flash_select_protocol(uint8_t allowed_protocols) {
@@ -38,6 +48,12 @@ void flash_select_protocol(uint8_t allowed_protocols) {
 	SPI_PORT &= ~_BV(MOSI);
 	SPI_PORT &= ~_BV(SCK);
 	DDR_SPI = (1<<MOSI)|(1<<SCK)|(1<<SS);
+#ifdef SPI_CS
+	/* Some other pin is used as the actual CS output in push-pull fashion (OC just works :P) */
+	SPI_PORT |= _BV(SPI_CS);
+	DDR_SPI |= _BV(SPI_CS);
+#endif
+	spi_hw_chk();
 	spi_init();
 }
 

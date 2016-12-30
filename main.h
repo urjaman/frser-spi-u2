@@ -1,6 +1,4 @@
 /*
- * This file is part of the frser-duino project.
- *
  * Copyright (C) 2010 Urja Rannikko <urjaman@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
@@ -13,13 +11,11 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
  */
 
-/* GENERIC DEFINITIONS FOR PROJECT */
+#ifndef F_CPU
 #define F_CPU 16000000UL
+#endif
 #include <util/delay.h>
 #include <avr/io.h>
 #include <avr/interrupt.h>
@@ -34,4 +30,3 @@
 #include <stdlib.h>
 #include <alloca.h>
 #include <inttypes.h>
-#include <setjmp.h>

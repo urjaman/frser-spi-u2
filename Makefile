@@ -1,7 +1,5 @@
 ##
-## This file is part of the frser-duino project.
-##
-## Copyright (C) 2010,2011,2015 Urja Rannikko <urjaman@gmail.com>
+## Copyright (C) 2010,2011,2015,2016 Urja Rannikko <urjaman@gmail.com>
 ##
 ## This program is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
@@ -13,22 +11,33 @@
 ## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 ## GNU General Public License for more details.
 ##
-## You should have received a copy of the GNU General Public License
-## along with this program; if not, write to the Free Software
-## Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301 USA
-##
 
 PROJECT=frser-spi-u2
 DEPS=uart.h main.h Makefile
 
-SOURCES=main.c spihw.c Descriptors.c fast-usbserial.c USB-Drivers/ConfigDescriptor.c USB-Drivers/DeviceStandardReq.c USB-Drivers/Events.c USB-Drivers/USBController.c USB-Drivers/USBTask.c USB-Drivers/Device.c USB-Drivers/Endpoint.c USB-Drivers/SimpleCDC.c USB-Drivers/USBInterrupt.c
+LUFA_SRCS = USB-Drivers/ConfigDescriptor.c \
+			USB-Drivers/DeviceStandardReq.c \
+			USB-Drivers/Events.c \
+			USB-Drivers/USBController.c \
+			USB-Drivers/USBTask.c \
+			USB-Drivers/Device.c \
+			USB-Drivers/Endpoint.c \
+			USB-Drivers/SimpleCDC.c \
+			USB-Drivers/USBInterrupt.c
+
+
+SOURCES=main.c spihw.c Descriptors.c fast-usbserial.c $(LUFA_SRCS)
 
 CC=avr-gcc
 LD=avr-ld
 OBJCOPY=avr-objcopy
-MMCU=atmega16u2
+MMCU ?= atmega16u2
+AVRDUDE_MCU ?= m16u2
+AVRDUDE_PROGRAMMER ?= avrispmkii
+AVRDUDE_PORT ?= usb
+DFLAGS ?=
 
-AVRDUDECMD=avrdude -c avrispmkii -p m16u2 -P usb
+AVRDUDECMD=avrdude -c $(AVRDUDE_PROGRAMMER) -p $(AVRDUDE_MCU) -P $(AVRDUDE_PORT)
 
 #AVRBINDIR=/usr/avr/bin/
 
@@ -48,7 +57,6 @@ CFLAGS += $(LUFA_OPTS)
 include libfrser/Makefile.frser
 include libfrser/Makefile.spihw_avrspi
 
-
 all: $(PROJECT).out
 
 $(PROJECT).hex: $(PROJECT).out
@@ -64,10 +72,8 @@ $(PROJECT).out: $(SOURCES) $(DEPS)
 asm: $(SOURCES) $(DEPS)
 	$(AVRBINDIR)$(CC) $(CFLAGS) -S  -I. -o $(PROJECT).s $(SOURCES)
 
-
 program: $(PROJECT).hex
 	$(AVRBINDIR)$(AVRDUDECMD) -U flash:w:$(PROJECT).hex
-
 
 clean:
 	rm -f $(PROJECT).bin
@@ -76,6 +82,15 @@ clean:
 	rm -f $(PROJECT).s
 	rm -f *.o
 
-
 objdump: $(PROJECT).out
 	$(AVRBINDIR)avr-objdump -xdC $(PROJECT).out | less
+	
+m32u4-3v3:
+	$(MAKE) clean
+	DFLAGS=-DF_CPU=8000000UL MMCU=atmega32u4 $(MAKE) all
+	
+flash-m32u4: AVRDUDE_PORT = /dev/ttyACM1
+flash-m32u4:
+	stty -F $(AVRDUDE_PORT) speed 1200
+	sleep 1s
+	AVRDUDE_PORT="$(AVRDUDE_PORT)" AVRDUDE_MCU=m32u4 AVRDUDE_PROGRAMMER="avr109" $(MAKE) program

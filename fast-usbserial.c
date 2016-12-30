@@ -33,21 +33,12 @@
   this software.
 */
 
-/** \file
- *
- *  Main source file for the fast-usbserial project. This file contains the main tasks of
- *  the project and is responsible for the initial application hardware configuration.
- */
-
 #include "main.h"
 #include "fast-usbserial.h"
 /* We implement the old uart.h API for libfrser */
 #include "uart.h"
 
-/** LUFA CDC Class driver interface configuration and state information. This structure is
- *  passed to all CDC Class driver functions, so that multiple instances of the same class
- *  within a device can be differentiated from one another.
- */
+
 USB_ClassInfo_CDC_Device_t VirtualSerial_CDC_Interface;
 
 static uint8_t usb_rxpacket_leftb = 0;
@@ -173,13 +164,33 @@ void EVENT_USB_Device_UnhandledControlRequest(void)
 	CDC_Device_ProcessControlRequest(&VirtualSerial_CDC_Interface);
 }
 
+
+static void bl_1200_check(void) {
+#if (defined __AVR_ATmega16U4__) || (defined __AVR_ATmega32U4__)
+	// We check DTR state to determine if host port is open (bit 0 of lineState).
+	if ((VirtualSerial_CDC_Interface.State.LineEncoding.BaudRateBPS == 1200) && (VirtualSerial_CDC_Interface.State.ControlLineStates.HostToDevice & 0x01) == 0)
+	{
+		/* This has to be the stupidest thing i've heard, but we'll live with it, i guess. *sigh* */
+		/* Btw it means: do not use more than 1792 bytes of .data+.bss or 766 bytes of stack. geeze. */
+		*(uint16_t *)0x0800 = 0x7777;
+		wdt_enable(WDTO_120MS);
+	}
+	else
+	{
+		wdt_disable();
+		wdt_reset();
+		*(uint16_t *)0x0800 = 0x0;
+	}
+#endif
+}
+
 /** Event handler for the CDC Class driver Line Encoding Changed event.
  *
  *  \param[in] CDCInterfaceInfo  Pointer to the CDC class interface configuration structure being referenced
  */
 void EVENT_CDC_Device_LineEncodingChanged(USB_ClassInfo_CDC_Device_t* const CDCInterfaceInfo)
 {
-
+	bl_1200_check();
 }
 
 /** Event handler for the CDC Class driver Host-to-Device Line Encoding Changed event.
@@ -188,5 +199,5 @@ void EVENT_CDC_Device_LineEncodingChanged(USB_ClassInfo_CDC_Device_t* const CDCI
  */
 void EVENT_CDC_Device_ControLineStateChanged(USB_ClassInfo_CDC_Device_t* const CDCInterfaceInfo)
 {
-
+	bl_1200_check();
 }
