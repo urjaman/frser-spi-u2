@@ -84,13 +84,13 @@ clean:
 
 objdump: $(PROJECT).out
 	$(AVRBINDIR)avr-objdump -xdC $(PROJECT).out | less
-	
+
 m32u4-3v3:
 	$(MAKE) clean
 	DFLAGS=-DF_CPU=8000000UL MMCU=atmega32u4 $(MAKE) all
-	
+
 flash-m32u4: AVRDUDE_PORT = /dev/ttyACM1
 flash-m32u4:
-	stty -F $(AVRDUDE_PORT) speed 1200
+	stty -F $(AVRDUDE_PORT) speed 9600 speed 1200
 	sleep 1s
 	AVRDUDE_PORT="$(AVRDUDE_PORT)" AVRDUDE_MCU=m32u4 AVRDUDE_PROGRAMMER="avr109" $(MAKE) program

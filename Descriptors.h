@@ -60,9 +60,14 @@
 		#define CDC_NOTIFICATION_EPSIZE        8
 
 		/** Size in bytes of the CDC data IN and OUT endpoints. */
-		#define CDC_OUT_EPSIZE                32
+#if (defined __AVR_ATmega16U4__) || (defined __AVR_ATmega32U4__)
+		/* U4s have enough DPRAM to go full size :) */
+		#define CDC_OUT_EPSIZE               64
+		#define CDC_IN_EPSIZE                64
+#else
+		#define CDC_OUT_EPSIZE               32
 		#define CDC_IN_EPSIZE                32
-
+#endif
 		#define CDC_CONTROL_EPNUM		0
 
 		#define CDC_OUT_DBLBANK	1

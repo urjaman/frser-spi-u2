@@ -19,7 +19,11 @@
 //#define FRSER_FEAT_DBG_CONSOLE
 
 /* Name provided to flashrom to identify what the thing is. Max 16 bytes */
+#if (defined __AVR_ATmega16U4__) || (defined __AVR_ATmega32U4__)
+#define FRSER_NAME "frser-spi-u4"
+#else
 #define FRSER_NAME "frser-spi-u2"
+#endif
 
 /* Attached address lines, only if FRSER_FEAT_PARALLEL */
 //#define FRSER_PARALLEL_BITS 19
